@@ -8,7 +8,7 @@ os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 st.set_page_config(page_title="VOXIT CRM", page_icon="🚀")
 
 # URL exacta: Revisá que en Google Cloud esté IGUAL (con la barra /)
-REDIRECT_URI = "https://voxit-crm.streamlit.app/"
+REDIRECT_URI = "https://voxit-crm.streamlit.app"
 
 try:
     client_config = {
