@@ -2,12 +2,12 @@ import streamlit as st
 from google_auth_oauthlib.flow import Flow
 import os
 
-# ESTA LÍNEA ES MAGIA: Obliga a aceptar la conexión aunque no detecte el HTTPS perfecto
+# Forzar transporte inseguro para evitar errores de protocolo en el primer login
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 st.set_page_config(page_title="VOXIT CRM", page_icon="🚀")
 
-# URL exacta: Revisá que en Google Cloud esté IGUAL (con la barra /)
+# URL SIN BARRA FINAL (Como pide tu error 400)
 REDIRECT_URI = "https://voxit-crm.streamlit.app"
 
 try:
@@ -20,7 +20,7 @@ try:
         }
     }
 except:
-    st.error("Revisá los Secrets en Streamlit Cloud")
+    st.error("❌ Error: No se encontraron los Secrets. Revisá Settings -> Secrets.")
     st.stop()
 
 if 'credentials' not in st.session_state:
@@ -34,14 +34,14 @@ if 'credentials' not in st.session_state:
     
     auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
     
-    # Usamos un botón normal para que no haya dudas
     st.link_button("🔗 VINCULAR MI GOOGLE DRIVE", auth_url, type="primary")
     
+    # Captura del código de regreso
     if "code" in st.query_params:
         flow.fetch_token(code=st.query_params["code"])
         st.session_state.credentials = flow.credentials
         st.rerun()
 else:
-    st.success("✅ ¡CONECTADO!")
+    st.success("✅ ¡CONECTADO CON ÉXITO!")
     st.balloons()
-    st.write("Bienvenido al panel, Agustín.")
+    st.write("Bienvenido Agustín, ya podés usar el sistema.")
