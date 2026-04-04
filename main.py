@@ -6,14 +6,18 @@ import os
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 st.set_page_config(page_title="VOXIT CRM", page_icon="🚀")
 
-# URL de tu app en Render
+# URL de tu app en Render (sacada de tus capturas)
 REDIRECT_URI = "https://voxit-app.onrender.com"
 
 def crear_flujo():
-    # Leemos las llaves desde el cerebro de Render (Environment Variables)
-    client_id = os.environ.get("G_CLIENT_ID")
-    client_secret = os.environ.get("G_CLIENT_SECRET")
+    # Usamos los nombres exactos que tenés en tu panel de Render
+    client_id = os.environ.get("GOOGLE_CLIENT_ID")
+    client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
     
+    if not client_id or not client_secret:
+        st.error("⚠️ Error: No se encontraron las credenciales en Render. Revisá 'Environment Variables'.")
+        st.stop()
+
     return Flow.from_client_config(
         {"web": {
             "client_id": client_id, 
@@ -26,6 +30,7 @@ def crear_flujo():
     )
 
 # --- LÓGICA DE INTERFAZ ---
+
 if 'credentials' in st.session_state:
     st.success("✅ ¡CONECTADO CON ÉXITO, AGUSTÍN!")
     st.balloons()
@@ -41,14 +46,17 @@ elif "code" in st.query_params:
         st.session_state.credentials = flow.credentials
         st.query_params.clear()
         st.rerun()
-    except Exception:
+    except Exception as e:
+        st.error(f"Error al obtener el token: {e}")
         st.query_params.clear()
-        st.rerun()
 
 else:
     st.title("🚀 VOXIT CRM")
-    st.write("Presioná el botón para vincular tu cuenta de Google.")
+    st.write("Presioná el botón para vincular tu cuenta de Google Drive.")
     
-    flow = crear_flujo()
-    auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
-    st.link_button("🔗 CONECTAR MI GOOGLE DRIVE", auth_url, type="primary")
+    try:
+        flow = crear_flujo()
+        auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
+        st.link_button("🔗 CONECTAR MI GOOGLE DRIVE", auth_url, type="primary")
+    except Exception as e:
+        st.error(f"Error de configuración: {e}")
