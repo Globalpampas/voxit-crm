@@ -6,17 +6,13 @@ import os
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 st.set_page_config(page_title="VOXIT CRM", page_icon="🚀")
 
-# URL principal
+# URL idéntica a la que configuraste en Google
 REDIRECT_URI = "https://voxit-app.onrender.com/"
 
 def crear_flujo():
     client_id = os.environ.get("GOOGLE_CLIENT_ID")
     client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
     
-    if not client_id or not client_secret:
-        st.error("⚠️ Faltan credenciales en Render.")
-        st.stop()
-
     return Flow.from_client_config(
         {"web": {
             "client_id": client_id, 
@@ -28,27 +24,47 @@ def crear_flujo():
         redirect_uri=REDIRECT_URI
     )
 
-# --- LÓGICA ---
+# --- LÓGICA DE AUTENTICACIÓN ---
+
 if 'credentials' in st.session_state:
-    st.success("✅ ¡CONECTADO, AGUSTÍN!")
+    st.success("✅ ¡ADENTRO! CONECTADO CON ÉXITO.")
     st.balloons()
-    st.write("### Bienvenido al Panel de VOXIT")
+    st.write("### Panel de Control VOXIT")
+    st.info("Ya podemos empezar a trabajar con los prospectos de Villa Motor.")
     if st.sidebar.button("Cerrar Sesión"):
         del st.session_state.credentials
         st.rerun()
 
 elif "code" in st.query_params:
-    flow = crear_flujo()
-    flow.fetch_token(code=st.query_params["code"])
-    st.session_state.credentials = flow.credentials
-    st.query_params.clear()
-    st.rerun()
+    # Si Google nos mandó el código, lo procesamos
+    if "flow_steps" in st.session_state:
+        try:
+            flow = st.session_state.flow_steps
+            flow.fetch_token(code=st.query_params["code"])
+            st.session_state.credentials = flow.credentials
+            st.query_params.clear()
+            st.rerun()
+        except Exception as e:
+            st.error(f"Error al validar: {e}")
+            if st.button("Reintentar"):
+                st.query_params.clear()
+                st.rerun()
+    else:
+        st.warning("La sesión expiró. Por favor, intentá conectar de nuevo.")
+        if st.button("Volver al Inicio"):
+            st.query_params.clear()
+            st.rerun()
 
 else:
     st.title("🚀 VOXIT CRM")
-    st.write("Presioná el botón para conectar.")
+    st.write("Conexión con Google Drive detectada.")
     
+    # Guardamos el objeto 'flow' en la sesión para que no se pierda el 'verifier'
     flow = crear_flujo()
-    # Forzamos que la URL de salida sea idéntica a la configurada
     auth_url, _ = flow.authorization_url(prompt='consent', access_type='offline')
+    st.session_state.flow_steps = flow
+    
     st.link_button("🔗 CONECTAR MI GOOGLE DRIVE", auth_url, type="primary")
+
+st.divider()
+st.caption("VOXIT - Villa Motor Company")
